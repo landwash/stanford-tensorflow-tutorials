@@ -14,9 +14,9 @@ from tensorflow.examples.tutorials.mnist import input_data
 import time
 
 # Define paramaters for the model
-learning_rate = 0.01
+learning_rate = 0.005
 batch_size = 128
-n_epochs = 30
+n_epochs = 100
 
 # Step 1: Read in data
 # using TF Learn's built in function to load MNIST data to the folder data/mnist
@@ -35,13 +35,22 @@ Y = tf.placeholder(tf.int32, [batch_size, 10], name='Y_placeholder')
 # b is initialized to 0
 # shape of w depends on the dimension of X and Y so that Y = tf.matmul(X, w)
 # shape of b depends on Y
-w = tf.Variable(tf.random_normal(shape=[784, 10], stddev=0.01), name='weights')
-b = tf.Variable(tf.zeros([1, 10]), name="bias")
+w = tf.Variable(tf.random_normal(shape=[784, 49], stddev=0.01), name='weights')
+b = tf.Variable(tf.zeros([1, 49]), name="bias")
+
+y1 = tf.matmul(X, w) + b
+y1_relu = tf.nn.relu(y1)
+
+w2 = tf.Variable(tf.random_normal(shape=[49, 10], stddev=0.01), name='weights2')
+b2 = tf.Variable(tf.zeros([1, 10]), name="bias2")
+
+# y = y1_relu * w2 + b2
 
 # Step 4: build model
 # the model that returns the logits.
 # this logits will be later passed through softmax layer
-logits = tf.matmul(X, w) + b 
+# logits = tf.matmul(X, w) + b 
+logits = tf.matmul(y1_relu, w2) + b2
 
 # Step 5: define loss function
 # use cross entropy of softmax of logits as the loss function
@@ -50,6 +59,9 @@ loss = tf.reduce_mean(entropy) # computes the mean over all the examples in the 
 
 # Step 6: define training op
 # using gradient descent with learning rate of 0.01 to minimize loss
+# global_step = tf.Variable(0) 
+# learning_rate = tf.train.exponential_decay(1e-2,global_step,decay_steps=50,decay_rate=0.98,staircase=True)
+
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 with tf.Session() as sess:
@@ -84,7 +96,7 @@ with tf.Session() as sess:
 	for i in range(n_batches):
 		X_batch, Y_batch = mnist.test.next_batch(batch_size)
 		accuracy_batch = sess.run([accuracy], feed_dict={X: X_batch, Y:Y_batch}) 
-		total_correct_preds += accuracy_batch	
+		total_correct_preds += accuracy_batch[0]	
 	
 	print('Accuracy {0}'.format(total_correct_preds/mnist.test.num_examples))
 
